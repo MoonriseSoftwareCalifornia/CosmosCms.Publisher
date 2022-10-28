@@ -1,0 +1,34 @@
+﻿@{
+    ViewData["Title"] = "API Catalog";
+}
+
+
+
+<link rel="stylesheet" href="https://unpkg.com/swagger-ui-dist@4.5.0/swagger-ui.css" />
+
+<div class="container mt-1 pt-2">
+    <div class="row">
+        <div class="col">
+            <h3>API Catalog</h3>
+            <a class="btn btn-sm btn-secondary" href="/Code/Index">Edit/Update</a>
+            <div id="swagger-ui"></div>
+        </div>
+    </div>
+</div>
+
+
+<script src="https://unpkg.com/swagger-ui-dist@4.5.0/swagger-ui-bundle.js"></script>
+<script src="https://unpkg.com/swagger-ui-dist@4.5.0/swagger-ui-standalone-preset.js"></script>
+<script>
+    window.onload = () => {
+        window.ui = SwaggerUIBundle({
+            url: '/Api/Specification',
+            dom_id: '#swagger-ui',
+            presets: [
+                SwaggerUIBundle.presets.apis,
+                SwaggerUIStandalonePreset
+            ],
+            layout: "StandaloneLayout",
+        });
+    };
+</script>
