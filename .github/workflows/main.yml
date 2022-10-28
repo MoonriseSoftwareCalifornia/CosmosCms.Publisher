@@ -12,6 +12,9 @@ on:
 jobs:
   build:
 
+    env:
+      TAGNAME: latest
+    
     runs-on: ubuntu-latest
 
     steps:
