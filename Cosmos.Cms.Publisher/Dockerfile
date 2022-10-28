@@ -11,7 +11,7 @@ EXPOSE 443
 
 FROM mcr.microsoft.com/dotnet/sdk:6.0 AS build
 WORKDIR /src
-COPY ["nuget.config", "."]
+
 COPY ["Cosmos.Cms.Publisher/Cosmos.Cms.Publisher.csproj", "Cosmos.Cms.Publisher/"]
 RUN dotnet restore "Cosmos.Cms.Publisher/Cosmos.Cms.Publisher.csproj"
 COPY . .
