@@ -27,7 +27,7 @@ namespace Cosmos.Cms.Publisher.Controllers
 
         public async Task<IActionResult> Index()
         {
-            var article = await _articleLogic.GetByUrl(HttpContext.Request.Path, HttpContext.Request.Query["lang"]); // ?? await _articleLogic.GetByUrl(id, langCookie);
+            var article = await _articleLogic.GetByUrl(HttpContext.Request.Path, HttpContext.Request.Query["lang"], TimeSpan.FromSeconds(5), TimeSpan.FromSeconds(20)); // ?? await _articleLogic.GetByUrl(id, langCookie);
 
             // Article not found?
             // try getting a version not published.

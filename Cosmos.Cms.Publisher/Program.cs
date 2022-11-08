@@ -6,12 +6,36 @@ using Newtonsoft.Json.Serialization;
 using Jering.Javascript.NodeJS;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
+using Cosmos.Cms.Publisher;
 
 var builder = WebApplication.CreateBuilder(args);
 
 
 var appInsightsConfig = builder.Configuration["APPLICATIONINSIGHTS_CONNECTION_STRING"];
 builder.Services.AddApplicationInsightsTelemetry();
+
+
+// Add CORS
+// See: https://learn.microsoft.com/en-us/aspnet/core/security/cors?view=aspnetcore-6.0
+
+var corsOrigins = builder.Configuration.GetValue<string>("CorsAllowedOrigins");
+if (string.IsNullOrEmpty(corsOrigins))
+{
+    builder.Services.AddCors();
+}
+else
+{
+    var origins = corsOrigins.Split(',');
+    builder.Services.AddCors(options =>
+    {
+        options.AddPolicy(name: "AllowedOrigPolicy",
+                          policy =>
+                          {
+                              policy.WithOrigins(origins);
+                          });
+    });
+}
 
 // Add services to the container.
 var connectionString = builder.Configuration.GetConnectionString("ApplicationDbContextConnection");
@@ -24,7 +48,7 @@ var cosmosIdentityDbName = builder.Configuration.GetValue<string>("CosmosIdentit
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
         options.UseCosmos(connectionString: connectionString, databaseName: cosmosIdentityDbName));
 
-builder.Services.AddDatabaseDeveloperPageExceptionFilter();
+// builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 
 builder.Services.AddMvc()
                 .AddNewtonsoftJson(options =>
@@ -57,6 +81,7 @@ var cosmosStartup = new CosmosStartup(builder.Configuration);
 
 // Add Cosmos Options
 var option = cosmosStartup.Build();
+
 builder.Services.AddSingleton(option);
 builder.Services.AddTransient<ArticleLogic>();
 
@@ -67,6 +92,8 @@ builder.Services.AddNodeJS();
 
 var app = builder.Build();
 
+// Middleware propert order:
+// See: https://learn.microsoft.com/en-us/aspnet/core/fundamentals/middleware/?view=aspnetcore-6.0#middleware-order
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
@@ -81,11 +108,27 @@ else
 
 app.UseHttpsRedirection();
 app.UseStaticFiles();
+// app.UseCookiePolicy();
 
 app.UseRouting();
+// app.UseRequestLocalization();
+if (string.IsNullOrEmpty(corsOrigins))
+{
+    // See: https://learn.microsoft.com/en-us/aspnet/core/security/cors?view=aspnetcore-6.0
+    app.UseCors();
+}
+else
+{
+    app.UseCors("AllowedOrigPolicy");
+}
+
+// app.UseOutputCache();
 
 app.UseAuthentication();
 app.UseAuthorization();
+// app.UseSession();
+// app.UseResponseCompression();
+// app.UseResponseCaching();
 
 app.MapControllerRoute(
     name: "default",
