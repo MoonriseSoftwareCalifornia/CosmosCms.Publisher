@@ -17,33 +17,53 @@ namespace Cosmos.Cms.Publisher.Controllers
         private readonly ILogger<HomeController> _logger;
         private readonly ArticleLogic _articleLogic;
         private readonly IOptions<CosmosConfig> _options;
+        private readonly ApplicationDbContext _dbContext;
 
-        public HomeController(ILogger<HomeController> logger, ArticleLogic articleLogic, IOptions<CosmosConfig> options)
+        public HomeController(ILogger<HomeController> logger, ArticleLogic articleLogic, IOptions<CosmosConfig> options, ApplicationDbContext dbContext)
         {
             _logger = logger;
             _articleLogic = articleLogic;
             _options = options;
+            _dbContext = dbContext;
         }
 
         public async Task<IActionResult> Index()
         {
-            var article = await _articleLogic.GetByUrl(HttpContext.Request.Path, HttpContext.Request.Query["lang"], TimeSpan.FromSeconds(5), TimeSpan.FromSeconds(20)); // ?? await _articleLogic.GetByUrl(id, langCookie);
-
-            // Article not found?
-            // try getting a version not published.
-
-            if (article == null)
+            try
             {
-                //
-                // Create your own not found page for a graceful page for users.
-                //
-                article = await _articleLogic.GetByUrl("/not_found", HttpContext.Request.Query["lang"]);
+                var article = await _articleLogic.GetByUrl(HttpContext.Request.Path, HttpContext.Request.Query["lang"], TimeSpan.FromSeconds(5), TimeSpan.FromSeconds(20)); // ?? await _articleLogic.GetByUrl(id, langCookie);
 
-                HttpContext.Response.StatusCode = 404;
+                // Article not found?
+                // try getting a version not published.
 
-                if (article == null) return NotFound();
+                if (article == null)
+                {
+
+                    //
+                    // Create your own not found page for a graceful page for users.
+                    //
+                    article = await _articleLogic.GetByUrl("/not_found", HttpContext.Request.Query["lang"]);
+
+                    HttpContext.Response.StatusCode = 404;
+
+                    if (article == null) return NotFound();
+                }
+                return View(article);
             }
-            return View(article);
+            catch (Microsoft.Azure.Cosmos.CosmosException e)
+            {
+                return View("UnderConstruction");                
+            }
+            catch (Exception e)
+            {
+                try
+                {
+                    _logger.LogError(e.Message, e);
+                }
+                catch { }
+
+                throw;
+            }
         }
 
         [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
