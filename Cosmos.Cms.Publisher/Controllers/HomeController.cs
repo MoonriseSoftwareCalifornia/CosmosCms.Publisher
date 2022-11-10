@@ -44,10 +44,23 @@ namespace Cosmos.Cms.Publisher.Controllers
                     //
                     article = await _articleLogic.GetByUrl("/not_found", HttpContext.Request.Query["lang"]);
 
+                    if (article == null)
+                    {
+                        if (await _dbContext.Pages.CosmosAnyAsync() == false)
+                        {
+                            // No pages published yet
+                            return View("UnderConstruction");
+                        }
+                    }
+
                     HttpContext.Response.StatusCode = 404;
 
                     if (article == null) return NotFound();
                 }
+                
+                //if (HttpContext.Request.Query["json"] == true)
+                //    return Json(article);
+
                 return View(article);
             }
             catch (Microsoft.Azure.Cosmos.CosmosException e)
