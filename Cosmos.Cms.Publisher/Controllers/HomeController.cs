@@ -5,6 +5,7 @@ using Cosmos.Cms.Common.Services.Configurations;
 using Cosmos.Cms.Publisher.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Cors;
+using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
 using System.Diagnostics;
@@ -18,13 +19,15 @@ namespace Cosmos.Cms.Publisher.Controllers
         private readonly ArticleLogic _articleLogic;
         private readonly IOptions<CosmosConfig> _options;
         private readonly ApplicationDbContext _dbContext;
+        private readonly IEmailSender _emailSender;
 
-        public HomeController(ILogger<HomeController> logger, ArticleLogic articleLogic, IOptions<CosmosConfig> options, ApplicationDbContext dbContext)
+        public HomeController(ILogger<HomeController> logger, ArticleLogic articleLogic, IOptions<CosmosConfig> options, ApplicationDbContext dbContext, IEmailSender emailSender)
         {
             _logger = logger;
             _articleLogic = articleLogic;
             _options = options;
             _dbContext = dbContext;
+            _emailSender = emailSender;
         }
 
         public async Task<IActionResult> Index()
@@ -65,17 +68,19 @@ namespace Cosmos.Cms.Publisher.Controllers
             }
             catch (Microsoft.Azure.Cosmos.CosmosException e)
             {
+                await HandleException(e);
                 return View("UnderConstruction");                
             }
             catch (Exception e)
             {
                 try
                 {
+                    await HandleException(e);
                     _logger.LogError(e.Message, e);
                 }
                 catch { }
 
-                throw;
+                return View("UnderConstruction");
             }
         }
 
@@ -83,6 +88,15 @@ namespace Cosmos.Cms.Publisher.Controllers
         public IActionResult Error()
         {
             return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
+        }
+
+        private async Task HandleException(Exception e)
+        {
+            if (_emailSender != null)
+            {
+                var message = "The 'publisher' tried to start but ran into this problem: " + e.Message;
+                await _emailSender.SendEmailAsync(_options.Value.SendGridConfig.EmailFrom, "Publisher Error", message);
+            }
         }
 
         /// <summary>

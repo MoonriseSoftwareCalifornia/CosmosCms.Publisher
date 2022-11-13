@@ -8,6 +8,10 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
 using Cosmos.Cms.Publisher;
+using AspNetCore.Identity.Services.SendGrid.Extensions;
+using AspNetCore.Identity.Services.SendGrid;
+using Google.Api;
+using System.Configuration;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -86,6 +90,15 @@ builder.Services.AddSingleton(option);
 builder.Services.AddTransient<ArticleLogic>();
 
 builder.Services.AddControllersWithViews();
+
+// Email provider
+var sendGridApiKey = builder.Configuration.GetValue<string>("CosmosSendGridApiKey");
+var adminEmail = builder.Configuration.GetValue<string>("CosmosAdminEmail");
+if (!string.IsNullOrEmpty(sendGridApiKey) && !string.IsNullOrEmpty(adminEmail))
+{
+    var sendGridOptions = new SendGridEmailProviderOptions(sendGridApiKey, adminEmail);
+    builder.Services.AddSendGridEmailProvider(sendGridOptions);
+}
 
 // Add Node Services
 builder.Services.AddNodeJS();
