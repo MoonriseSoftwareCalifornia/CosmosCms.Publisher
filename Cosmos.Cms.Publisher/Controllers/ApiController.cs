@@ -50,7 +50,7 @@ namespace Cosmos.Cms.Controllers
         [ValidateAntiForgeryToken()]
         public async Task<IActionResult> Index(string Id)
         {
-            string? result;
+            string? result = null;
             try
             {
                 var script = await _dbContext.NodeScripts.FirstOrDefaultAsync(f => f.EndPoint == Id);
@@ -71,7 +71,7 @@ namespace Cosmos.Cms.Controllers
             catch (Exception e)
             {
                 _logger.LogError(e.Message, e);
-                throw new Exception("An error has occured.");
+                //throw new Exception("An error has occured.");
             }
 
             if (result == null)
