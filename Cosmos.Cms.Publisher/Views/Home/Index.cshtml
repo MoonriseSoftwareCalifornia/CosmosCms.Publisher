@@ -18,6 +18,9 @@
     @Html.Raw(Model.Layout.HtmlHeader)
     @Html.Raw(Model.Content)
     @Html.Raw(Model.Layout.FooterHtmlContent)
+    <form id="frm__ccmsxsr">
+        @Html.AntiForgeryToken()
+    </form>
     @Html.Raw(Model.FooterJavaScript)
 </body>
 </html>

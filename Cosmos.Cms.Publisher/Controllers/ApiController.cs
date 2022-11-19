@@ -3,23 +3,27 @@ using Cosmos.Cms.Common.Models;
 using Cosmos.Cms.Common.Services.Configurations;
 using Cosmos.Cms.Publisher.Models;
 using Jering.Javascript.NodeJS;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using Microsoft.OpenApi.Models;
 using Microsoft.OpenApi.Writers;
 using Newtonsoft.Json;
+using System.Data;
 
 namespace Cosmos.Cms.Controllers
 {
+
     /// <summary>
     /// API Controller
     /// </summary>
-    public class ApiController : Controller
+    [AllowAnonymous]
+    [Authorize(Roles = "Reviewers, Administrators, Editors, Authors")]
+    public sealed class ApiController : Controller
     {
 
         private readonly INodeJSService _nodeJSService;
-        private readonly IOptions<CosmosConfig> _cosmosConfig;
         private readonly ApplicationDbContext _dbContext;
         private readonly ILogger<ApiController> _logger;
 
@@ -27,14 +31,11 @@ namespace Cosmos.Cms.Controllers
         /// Constructor
         /// </summary>
         /// <param name="nodeJSService"></param>
-        /// <param name="cosmosConfig"></param>
         /// <param name="dbContext"></param>
         /// <param name="logger"></param>
-        public ApiController(INodeJSService nodeJSService, IOptions<CosmosConfig> cosmosConfig,
-            ApplicationDbContext dbContext, ILogger<ApiController> logger)
+        public ApiController(INodeJSService nodeJSService, ApplicationDbContext dbContext, ILogger<ApiController> logger)
         {
             _nodeJSService = nodeJSService;
-            _cosmosConfig = cosmosConfig;
             _dbContext = dbContext;
             _logger = logger;
         }
@@ -42,68 +43,94 @@ namespace Cosmos.Cms.Controllers
         /// <summary>
         /// API End Point
         /// </summary>
-        /// <param name="Id"></param>
+        /// <param name="Id">EndPoint</param>
         /// <returns></returns>
         [HttpGet]
         [HttpPost]
+        [ValidateAntiForgeryToken()]
         public async Task<IActionResult> Index(string Id)
         {
+            string? result;
             try
             {
-
-                if (string.IsNullOrEmpty(Id))
-                {
-                    return View();
-                }
-
-                // Try to invoke from the NodeJS cache
-                //(bool success, var result) = await _nodeJSService.TryInvokeFromCacheAsync<string>(id, args: new[] { "success" });
-
-                // If the module hasn't been cached, cache it. If the NodeJS process dies and restarts, the cache will be invalidated, so always check whether success is false.
-                var script = await _dbContext.NodeScripts.WithPartitionKey(Id).Where(f => f.Published != null && f.Published <= DateTimeOffset.UtcNow).OrderByDescending(o => o.Version).FirstOrDefaultAsync();
-
-                if (script == null)
-                {
-                    return NotFound();
-                }
+                var script = await _dbContext.NodeScripts.FirstOrDefaultAsync(f => f.EndPoint == Id);
 
                 var values = GetArgs(Request, script);
 
-                ApiResult apiResult;
-
-                try
+                // Send the module string to NodeJS where it's compiled, invoked and cached.
+                if (string.IsNullOrEmpty(script.Code))
                 {
-                    // Send the module string to NodeJS where it's compiled, invoked and cached.
-                    var result = await _nodeJSService.InvokeFromStringAsync<string>(script.Code, null, args: values);
-
-                    apiResult = new ApiResult(result)
-                    {
-                        IsSuccess = true
-                    };
+                    result = await _nodeJSService.InvokeFromFileAsync<string>($"{script.EndPoint}", args: values.Select(s => s.Value).ToArray());
                 }
-                catch (Exception e)
+                else
                 {
-                    apiResult = new ApiResult(e.Message)
-                    {
-                        IsSuccess = true
-                    };
+                    result = await _nodeJSService.InvokeFromStringAsync<string>(script.Code, script.Updated.ToString(), args: values);
                 }
-
-                return Json(apiResult);
 
             }
             catch (Exception e)
             {
-                var apiResult = new ApiResult($"Error: {Id}.")
-                {
-                    IsSuccess = true
-                };
-
-                apiResult.Errors.Add(Id, e.Message);
-
-                return Json(apiResult);
+                _logger.LogError(e.Message, e);
+                throw new Exception("An error has occured.");
             }
 
+            if (result == null)
+            {
+                return Ok();
+            }
+
+            return Json(result);
+        }
+
+        /// <summary>
+        /// Gets arguments from a request
+        /// </summary>
+        /// <param name="request"></param>
+        /// <param name="script"></param>
+        /// <returns></returns>
+        private static ApiArgument[] GetArgs(Microsoft.AspNetCore.Http.HttpRequest request, NodeScript script)
+        {
+            var inputVarDefs = script.InputVars.Select(s => new InputVarDefinition(s)).ToList();
+
+            if (request.Method == "POST")
+            {
+                if (request.ContentType == null)
+                {
+                    var values = new List<ApiArgument>();
+
+                    foreach (var item in inputVarDefs)
+                    {
+                        var value = (string)request.Headers[item.Name];
+                        value = string.IsNullOrEmpty(value) ? "" : value.Substring(0, item.MaxLength);
+
+                        values.Add(new ApiArgument() { Key = item.Name, Value = value });
+                    }
+
+                    return values.ToArray();
+                }
+
+                if (request.Form != null)
+                {
+                    return request.Form.Where(a => script.InputVars.Contains(a.Key))
+                   .Select(s => new ApiArgument()
+                   {
+                       Key = s.Key,
+                       Value = s.Value
+                   }).ToArray();
+                }
+
+                return null;
+            }
+            else if (request.Method == "GET")
+            {
+                return request.Query.Where(a => script.InputVars.Contains(a.Key))
+                    .Select(s => new ApiArgument()
+                    {
+                        Key = s.Key,
+                        Value = s.Value
+                    }).ToArray();
+            }
+            return null;
         }
 
         /// <summary>
@@ -119,7 +146,7 @@ namespace Cosmos.Cms.Controllers
             foreach (var script in scripts)
             {
                 var parameters = new List<OpenApiParameter>();
-                
+
                 foreach (var p in script.InputVars)
                 {
                     parameters.Add(new OpenApiParameter()
@@ -129,13 +156,12 @@ namespace Cosmos.Cms.Controllers
                         {
                             Type = "string"
                         },
-                        In = ParameterLocation.Header
+                        In = ParameterLocation.Query
                     });
                 }
 
                 paths.Add($"/Index/{script.EndPoint}", new OpenApiPathItem()
                 {
-
                     Operations = new Dictionary<OperationType, OpenApiOperation>
                     {
                         [OperationType.Post] = new OpenApiOperation
@@ -159,13 +185,13 @@ namespace Cosmos.Cms.Controllers
                 Info = new OpenApiInfo
                 {
                     Version = "1.0.0",
-                    Title = "Swagger Petstore (Simple)",
+                    Title = "Swagger Petstore (Simple)"
                 },
                 Servers = new List<OpenApiServer>
                             {
                                 new OpenApiServer { Url = "/api" }
                             },
-                Paths = paths
+                Paths = paths,
             };
 
 
@@ -179,47 +205,40 @@ namespace Cosmos.Cms.Controllers
             return Json(model);
         }
 
+    }
 
+    /// <summary>
+    /// Input variable definition
+    /// </summary>
+    public class InputVarDefinition
+    {
         /// <summary>
-        /// Gets arguments from a request
+        /// Constructor
         /// </summary>
-        /// <param name="request"></param>
-        /// <param name="script"></param>
-        /// <returns></returns>
-        public static ApiArgument[] GetArgs(Microsoft.AspNetCore.Http.HttpRequest request, NodeScript script)
+        /// <param name="definition"></param>
+        /// <example>InputVarDefinition("firstName:string:64")</example>
+        public InputVarDefinition(string definition)
         {
-            if (request.Method == "POST")
+            var parts = definition.Split(':');
+            Name = parts[0];
+            if (parts.Length > 1)
             {
-                if (request.ContentType == null)
-                {
-                    var values = new List<ApiArgument>();
-
-                    foreach (var item in script.InputVars)
-                    {
-                        values.Add(new ApiArgument() { Key = item, Value = request.Headers[item] });
-                    }
-
-                    return values.ToArray();
-                }
-
-                return request.Form.Where(a => script.InputVars.Contains(a.Key))
-                    .Select(s => new ApiArgument()
-                    {
-                        Key = s.Key,
-                        Value = s.Value
-                    }).ToArray();
+                MaxLength = int.Parse(parts[1]);
             }
-            else if (request.Method == "GET")
+            else
             {
-                return request.Query.Where(a => script.InputVars.Contains(a.Key))
-                    .Select(s => new ApiArgument()
-                    {
-                        Key = s.Key,
-                        Value = s.Value
-                    }).ToArray();
+                MaxLength = 256;
             }
-            return null;
         }
 
+        /// <summary>
+        /// Input variable name
+        /// </summary>
+        public string Name { get; set; }
+
+        /// <summary>
+        /// Maximum number of string characters
+        /// </summary>
+        public int MaxLength { get; set; } = 1024;
     }
 }

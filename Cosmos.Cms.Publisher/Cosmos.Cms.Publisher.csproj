@@ -2,8 +2,8 @@
 
   <PropertyGroup>
     <TargetFramework>net7.0</TargetFramework>
-    <AssemblyVersion>7.3.3.1</AssemblyVersion>
-    <FileVersion>7.3.3.1</FileVersion>
+    <AssemblyVersion>7.3.4.2</AssemblyVersion>
+    <FileVersion>7.3.4.2</FileVersion>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <UserSecretsId>aspnet-Cosmos.Cms.Publisher-F1D91233-1093-41F8-B23F-43E81E1454FF</UserSecretsId>
@@ -19,11 +19,12 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="AspNetCore.Identity.CosmosDb" Version="2.1.1" />
+    <PackageReference Include="AspNetCore.Identity.CosmosDb" Version="2.1.2" />
     <PackageReference Include="AspNetCore.Identity.Services.SendGrid" Version="2.0.8" />
-    <PackageReference Include="Cosmos.Cms.Common" Version="7.4.1" />
+    <PackageReference Include="Cosmos.Cms.Common" Version="7.4.2" />
     <PackageReference Include="Jering.Javascript.NodeJS" Version="6.3.1" />
     <PackageReference Include="Microsoft.ApplicationInsights.AspNetCore" Version="2.21.0" />
+    <PackageReference Include="Microsoft.AspNet.WebPages" Version="3.2.9" />
     <PackageReference Include="Microsoft.AspNetCore.Diagnostics.EntityFrameworkCore" Version="7.0.0" />
     <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="7.0.0" />
     <PackageReference Include="Microsoft.AspNetCore.Identity.UI" Version="7.0.0" />
