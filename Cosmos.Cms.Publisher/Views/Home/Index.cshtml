@@ -2,25 +2,30 @@
 @{
     Layout = null;
     ViewData["Title"] = Model.Title;
-    var menuUrl = $"/Home/CcmsContentIndex/{Model.Id}";
 }
 <!DOCTYPE HTML>
 <html lang="@Model.LanguageCode">
 <head>
     <title>@Model.Title</title>
+    @*
+        Layout header inject location
+    *@
     @Html.Raw(Model.Layout.Head)
     @*
-    Page specific header
+        Page specific inject location
     *@
     @Html.Raw(Model.HeadJavaScript)
 </head>
 <body>
+    @*
+        Layout page head inject
+    *@
     @Html.Raw(Model.Layout.HtmlHeader)
     @Html.Raw(Model.Content)
+    @*
+        Layout page footer inject
+    *@
     @Html.Raw(Model.Layout.FooterHtmlContent)
-    <form id="frm__ccmsxsr">
-        @Html.AntiForgeryToken()
-    </form>
     @Html.Raw(Model.FooterJavaScript)
 </body>
 </html>
