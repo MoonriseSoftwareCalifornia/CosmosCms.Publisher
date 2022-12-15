@@ -79,8 +79,8 @@ namespace Cosmos.Cms.Controllers
             }
             catch (Exception e)
             {
-                _logger.LogError(e.Message, e);
-                //throw new Exception("An error has occured.");
+                string? message = e.Message;
+                _logger.LogError(e, message);
             }
 
             if (result == null)
@@ -236,7 +236,7 @@ namespace Cosmos.Cms.Controllers
             }
             else
             {
-                MaxLength = 256;
+                MaxLength = 1024;
             }
         }
 
@@ -248,6 +248,6 @@ namespace Cosmos.Cms.Controllers
         /// <summary>
         /// Maximum number of string characters
         /// </summary>
-        public int MaxLength { get; set; } = 1024;
+        public int MaxLength { get; set; }
     }
 }

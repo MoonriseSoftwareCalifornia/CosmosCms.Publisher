@@ -47,22 +47,16 @@ namespace Cosmos.Cms.Publisher.Controllers
                     //
                     article = await _articleLogic.GetByUrl("/not_found", HttpContext.Request.Query["lang"]);
 
-                    if (article == null)
+                    if (article == null && !await _dbContext.Pages.CosmosAnyAsync())
                     {
-                        if (await _dbContext.Pages.CosmosAnyAsync() == false)
-                        {
-                            // No pages published yet
-                            return View("UnderConstruction");
-                        }
+                        // No pages published yet
+                        return View("UnderConstruction");
                     }
 
                     HttpContext.Response.StatusCode = 404;
 
                     if (article == null) return NotFound();
                 }
-
-                //if (HttpContext.Request.Query["json"] == true)
-                //    return Json(article);
 
                 return View(article);
             }
@@ -73,12 +67,18 @@ namespace Cosmos.Cms.Publisher.Controllers
             }
             catch (Exception e)
             {
+                string? message = e.Message;
+                _logger.LogError(e, message);
+
                 try
                 {
-                    await HandleException(e);
-                    _logger.LogError(e.Message, e);
+                    if (!await _dbContext.Pages.CosmosAnyAsync())
+                        await HandleException(e); // Only use if there are no articles
                 }
-                catch { }
+                catch
+                {
+                    // This can fail because the error can't be emailed
+                }
 
                 return View("UnderConstruction");
             }

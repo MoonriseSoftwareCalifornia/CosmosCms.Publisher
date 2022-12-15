@@ -11,8 +11,6 @@ using Newtonsoft.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
 
-
-//var appInsightsConfig = builder.Configuration["APPLICATIONINSIGHTS_CONNECTION_STRING"];
 builder.Services.AddApplicationInsightsTelemetry();
 
 
@@ -50,8 +48,6 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
         options.UseCosmos(connectionString: connectionString, databaseName: cosmosIdentityDbName));
 #pragma warning restore CS8604 // Possible null reference argument.
 
-// builder.Services.AddDatabaseDeveloperPageExceptionFilter();
-
 builder.Services.AddMvc()
                 .AddNewtonsoftJson(options =>
                     options.SerializerSettings.ContractResolver =
@@ -61,7 +57,9 @@ builder.Services.AddMvc()
 // Add Cosmos Identity here
 //
 builder.Services.AddCosmosIdentity<ApplicationDbContext, IdentityUser, IdentityRole>(
-      options => options.SignIn.RequireConfirmedAccount = true
+      options => { 
+          options.SignIn.RequireConfirmedAccount = true;
+      }
     )
     .AddDefaultUI() // Use this if Identity Scaffolding added
     .AddDefaultTokenProviders();
@@ -137,10 +135,10 @@ else
 
 app.UseHttpsRedirection();
 app.UseStaticFiles();
-// app.UseCookiePolicy();
+app.UseCookiePolicy();
 
 app.UseRouting();
-// app.UseRequestLocalization();
+
 if (string.IsNullOrEmpty(corsOrigins))
 {
     // See: https://learn.microsoft.com/en-us/aspnet/core/security/cors?view=aspnetcore-6.0
@@ -151,34 +149,28 @@ else
     app.UseCors("AllowedOrigPolicy");
 }
 
-// app.UseOutputCache();
+app.UseOutputCache();
 
 app.UseAuthentication();
 app.UseAuthorization();
-// app.UseSession();
-// app.UseResponseCompression();
-// app.UseResponseCaching();
+
+app.UseResponseCompression();
+app.UseResponseCaching();
 
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}");
 
-// Deep path
-app.UseEndpoints(
-    endpoints =>
-    {
-        endpoints.MapControllerRoute(
+app.MapControllerRoute(
             "MsValidation",
             ".well-known/microsoft-identity-association.json",
             new { controller = "Home", action = "GetMicrosoftIdentityAssociation" });
 
-        endpoints.MapControllerRoute(
+app.MapControllerRoute(
             "MyArea",
             "{area:exists}/{controller=Home}/{action=Index}/{id?}");
 
-        endpoints.MapFallbackToController("Index", "Home");
-    }
-);
+app.MapFallbackToController("Index", "Home");
 
 app.MapRazorPages();
 
