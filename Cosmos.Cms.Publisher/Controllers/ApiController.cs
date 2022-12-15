@@ -1,12 +1,9 @@
 ﻿using Cosmos.Cms.Common.Data;
 using Cosmos.Cms.Common.Models;
-using Cosmos.Cms.Common.Services.Configurations;
-using Cosmos.Cms.Publisher.Models;
 using Jering.Javascript.NodeJS;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Options;
 using Microsoft.OpenApi.Models;
 using Microsoft.OpenApi.Writers;
 using Newtonsoft.Json;
@@ -55,12 +52,24 @@ namespace Cosmos.Cms.Controllers
             {
                 var script = await _dbContext.NodeScripts.FirstOrDefaultAsync(f => f.EndPoint == Id);
 
+                if (script == null)
+                {
+                    return NotFound();
+                }
+
                 var values = GetArgs(Request, script);
 
                 // Send the module string to NodeJS where it's compiled, invoked and cached.
                 if (string.IsNullOrEmpty(script.Code))
                 {
-                    result = await _nodeJSService.InvokeFromFileAsync<string>($"{script.EndPoint}", args: values.Select(s => s.Value).ToArray());
+                    if (values == null)
+                    {
+                        result = await _nodeJSService.InvokeFromFileAsync<string>($"{script.EndPoint}");
+                    }
+                    else
+                    {
+                        result = await _nodeJSService.InvokeFromFileAsync<string>($"{script.EndPoint}", args: values.Select(s => s.Value).ToArray());
+                    }
                 }
                 else
                 {
@@ -88,7 +97,7 @@ namespace Cosmos.Cms.Controllers
         /// <param name="request"></param>
         /// <param name="script"></param>
         /// <returns></returns>
-        private static ApiArgument[] GetArgs(Microsoft.AspNetCore.Http.HttpRequest request, NodeScript script)
+        private static ApiArgument[]? GetArgs(Microsoft.AspNetCore.Http.HttpRequest request, NodeScript script)
         {
             var inputVarDefs = script.InputVars.Select(s => new InputVarDefinition(s)).ToList();
 
@@ -100,7 +109,7 @@ namespace Cosmos.Cms.Controllers
 
                     foreach (var item in inputVarDefs)
                     {
-                        var value = (string)request.Headers[item.Name];
+                        var value = (string?)request.Headers[item.Name];
                         value = string.IsNullOrEmpty(value) ? "" : value.Substring(0, item.MaxLength);
 
                         values.Add(new ApiArgument() { Key = item.Name, Value = value });

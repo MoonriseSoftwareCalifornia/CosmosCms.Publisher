@@ -60,7 +60,7 @@ namespace Cosmos.Cms.Publisher.Controllers
 
                     if (article == null) return NotFound();
                 }
-                
+
                 //if (HttpContext.Request.Query["json"] == true)
                 //    return Json(article);
 
@@ -69,7 +69,7 @@ namespace Cosmos.Cms.Publisher.Controllers
             catch (Microsoft.Azure.Cosmos.CosmosException e)
             {
                 await HandleException(e);
-                return View("UnderConstruction");                
+                return View("UnderConstruction");
             }
             catch (Exception e)
             {

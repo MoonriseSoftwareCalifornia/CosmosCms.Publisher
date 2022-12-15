@@ -4,17 +4,15 @@ using AspNetCore.Identity.Services.SendGrid.Extensions;
 using Cosmos.Cms.Common.Data;
 using Cosmos.Cms.Common.Data.Logic;
 using Cosmos.Cms.Common.Services.Configurations;
-using Google.Api;
 using Jering.Javascript.NodeJS;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json.Serialization;
-using System.Configuration;
 
 var builder = WebApplication.CreateBuilder(args);
 
 
-var appInsightsConfig = builder.Configuration["APPLICATIONINSIGHTS_CONNECTION_STRING"];
+//var appInsightsConfig = builder.Configuration["APPLICATIONINSIGHTS_CONNECTION_STRING"];
 builder.Services.AddApplicationInsightsTelemetry();
 
 
@@ -47,8 +45,10 @@ var cosmosIdentityDbName = builder.Configuration.GetValue<string>("CosmosIdentit
 //
 // Add the Cosmos database context here
 //
+#pragma warning disable CS8604 // Possible null reference argument.
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
         options.UseCosmos(connectionString: connectionString, databaseName: cosmosIdentityDbName));
+#pragma warning restore CS8604 // Possible null reference argument.
 
 // builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 
