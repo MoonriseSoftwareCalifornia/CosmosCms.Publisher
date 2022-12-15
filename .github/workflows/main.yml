@@ -38,8 +38,8 @@ jobs:
               username: ${{ secrets.DOCKERLOGIN }}
               password: ${{ secrets.DOCKERPASSWORD }}
       
-    - name: Build Editor Docker image
+    - name: Build publiher Docker image
       run: docker build . --file /home/runner/work/CosmosCms.Publisher/CosmosCms.Publisher/Cosmos.Cms.Publisher/Dockerfile --tag toiyabe/cosmospublisher:${TAGNAME}
     
-    - name: Docker push Editor image
+    - name: Docker push publiher image
       run:  docker push toiyabe/cosmospublisher:${TAGNAME}
