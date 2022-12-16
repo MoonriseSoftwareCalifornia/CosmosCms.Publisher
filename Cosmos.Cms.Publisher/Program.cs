@@ -149,12 +149,12 @@ else
     app.UseCors("AllowedOrigPolicy");
 }
 
-app.UseOutputCache();
+//app.UseOutputCache();
 
 app.UseAuthentication();
 app.UseAuthorization();
 
-app.UseResponseCompression();
+//app.UseResponseCompression();
 app.UseResponseCaching();
 
 app.MapControllerRoute(
