@@ -4,7 +4,6 @@ using AspNetCore.Identity.Services.SendGrid.Extensions;
 using Cosmos.Cms.Common.Data;
 using Cosmos.Cms.Common.Data.Logic;
 using Cosmos.Cms.Common.Services.Configurations;
-using Jering.Javascript.NodeJS;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json.Serialization;
@@ -96,30 +95,9 @@ if (!string.IsNullOrEmpty(sendGridApiKey) && !string.IsNullOrEmpty(adminEmail))
     builder.Services.AddSendGridEmailProvider(sendGridOptions);
 }
 
-// Add Node Services
-builder.Services.AddNodeJS();
-
-// Add Node Services
-// https://github.com/JeringTech/Javascript.NodeJS#configuring
-builder.Services.AddNodeJS();
-// Options for the NodeJS process, here we enable debugging
-var projectPath = builder.Configuration.GetValue<string>("CosmosNodeProjectPath");
-
-builder.Services.Configure<NodeJSProcessOptions>(options =>
-{
-    options.ProjectPath = String.IsNullOrEmpty(projectPath) ? "/ccmssrc" : projectPath;
-});
-
-builder.Services.Configure<OutOfProcessNodeJSServiceOptions>(options =>
-{
-    // options.WatchFileNamePatterns = new[] { "*index.js" }; // Defaults are OK
-    options.EnableFileWatching = true;
-    options.WatchSubdirectories = true;
-});
-
 var app = builder.Build();
 
-// Middleware propert order:
+// Middle-ware proper order:
 // See: https://learn.microsoft.com/en-us/aspnet/core/fundamentals/middleware/?view=aspnetcore-6.0#middleware-order
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
