@@ -2,9 +2,6 @@
 
 FROM mcr.microsoft.com/dotnet/aspnet:7.0 AS base
 
-# Install NodeJS 10
-RUN apt-get update -y && apt-get install -y gnupg2 && apt-get install -y curl && curl -sL https://deb.nodesource.com/setup_18.x | bash - && apt-get update -y && apt-get install -y nodejs
-
 WORKDIR /app
 EXPOSE 80
 EXPOSE 443
