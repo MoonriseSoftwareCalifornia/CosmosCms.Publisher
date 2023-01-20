@@ -56,7 +56,8 @@ builder.Services.AddMvc()
 // Add Cosmos Identity here
 //
 builder.Services.AddCosmosIdentity<ApplicationDbContext, IdentityUser, IdentityRole>(
-      options => { 
+      options =>
+      {
           options.SignIn.RequireConfirmedAccount = true;
       }
     )
@@ -133,7 +134,6 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 //app.UseResponseCompression();
-app.UseResponseCaching();
 
 app.MapControllerRoute(
     name: "default",

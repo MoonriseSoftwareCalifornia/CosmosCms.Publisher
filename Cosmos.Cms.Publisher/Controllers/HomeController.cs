@@ -58,6 +58,17 @@ namespace Cosmos.Cms.Publisher.Controllers
                     if (article == null) return NotFound();
                 }
 
+                if (article.Expires.HasValue)
+                {
+                    Response.Headers.Expires = article.Expires.Value.ToString("ddd, dd MMM yyyy HH:mm:ss 'GMT'");
+                }
+                else
+                {
+                    Response.Headers.Expires = DateTimeOffset.UtcNow.AddMinutes(30).ToString("ddd, dd MMM yyyy HH:mm:ss 'GMT'");
+                }
+                Response.Headers.ETag = article.Id.ToString();
+                Response.Headers.LastModified= article.Updated.ToString("ddd, dd MMM yyyy HH:mm:ss 'GMT'");
+
                 return View(article);
             }
             catch (Microsoft.Azure.Cosmos.CosmosException e)
