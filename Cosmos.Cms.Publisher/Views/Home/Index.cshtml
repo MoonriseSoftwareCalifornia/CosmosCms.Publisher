@@ -1,4 +1,5 @@
-﻿@model Cosmos.Cms.Common.Models.ArticleViewModel
+﻿
+@model Cosmos.Cms.Common.Models.ArticleViewModel
 @{
     Layout = null;
     ViewData["Title"] = Model.Title;
@@ -27,5 +28,6 @@
     *@
     @Html.Raw(Model.Layout.FooterHtmlContent)
     @Html.Raw(Model.FooterJavaScript)
+    <form>@Html.AntiForgeryToken()</form>
 </body>
 </html>
