@@ -73,7 +73,7 @@ namespace Cosmos.Cms.Publisher.Controllers
             }
             catch (Microsoft.Azure.Cosmos.CosmosException e)
             {
-                await HandleException(e);
+                //await HandleException(e);
                 return View("UnderConstruction");
             }
             catch (Exception e)
@@ -81,15 +81,15 @@ namespace Cosmos.Cms.Publisher.Controllers
                 string? message = e.Message;
                 _logger.LogError(e, message);
 
-                try
-                {
-                    if (!await _dbContext.Pages.CosmosAnyAsync())
-                        await HandleException(e); // Only use if there are no articles
-                }
-                catch
-                {
-                    // This can fail because the error can't be emailed
-                }
+                //try
+                //{
+                //    if (!await _dbContext.Pages.CosmosAnyAsync())
+                //        await HandleException(e); // Only use if there are no articles
+                //}
+                //catch
+                //{
+                //    // This can fail because the error can't be emailed
+                //}
 
                 return View("UnderConstruction");
             }
