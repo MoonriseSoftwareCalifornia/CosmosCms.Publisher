@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
+using NuGet.Protocol.Plugins;
 using System.Diagnostics;
 using System.Text;
 
@@ -73,7 +74,8 @@ namespace Cosmos.Cms.Publisher.Controllers
             }
             catch (Microsoft.Azure.Cosmos.CosmosException e)
             {
-                //await HandleException(e);
+                string? message = e.Message;
+                _logger.LogError(e, message);
                 return View("UnderConstruction");
             }
             catch (Exception e)
