@@ -2,8 +2,8 @@
 
   <PropertyGroup>
     <TargetFramework>net7.0</TargetFramework>
-    <AssemblyVersion>7.4.7.17</AssemblyVersion>
-    <FileVersion>7.4.7.17</FileVersion>
+    <AssemblyVersion>7.4.7.18</AssemblyVersion>
+    <FileVersion>7.4.7.18</FileVersion>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <UserSecretsId>aspnet-Cosmos.Cms.Publisher-F1D91233-1093-41F8-B23F-43E81E1454FF</UserSecretsId>
@@ -16,6 +16,12 @@
 
   <ItemGroup>
     <Content Include="Views\Home\Index.cshtml.BAK" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="wwwroot\ccms\js\cosmosUtils.js" />
+    <None Include="wwwroot\ccms\js\GoogleTranslations.js" />
+    <None Include="wwwroot\ccms\js\TimeUtils.js" />
   </ItemGroup>
 
   <ItemGroup>
